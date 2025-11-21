@@ -1,0 +1,50 @@
+version: '0.1'
+
+networks:
+    rest_torpeda:
+        driver: bridge
+
+services:
+    db:
+        image: postgres:15-alpine
+        container_name: rest_torpeda_postgres_c
+        environment:
+            TZ: "Europe/Moscow"
+            POSTGRES_DB: ${DB_NAME}
+            POSTGRES_USER: ${DB_USER}
+            POSTGRES_PASSWORD: ${DB_PASSWORD}
+        volumes:
+            - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+        ports:
+            - ${DB_HOST}:5432:5432
+        networks:
+            - rest_torpeda
+    dict_server:
+        image: valkey/valkey
+        container_name: rest_torpeda_valkey_c
+        ports:
+            - ${DICT_SERVER_HOST}:6379:6379
+        networks:
+            - rest_torpeda
+
+    asgi:
+        build: .
+        image: rest_torpeda_asgi
+        container_name: rest_torpeda_asgi_c
+        env_file: ./.env
+        command: uvicorn asgi:app --workers 1 --host 0.0.0.0 --port 80 --access-log
+        depends_on:
+            - db
+            - event_cache
+        networks:
+            - rest_torpeda
+
+    http_server:
+        image: nginx
+        container_name: rest_torpeda_asgi_c
+        ports:
+            - ${SEVER_IP}:8080:8080
+        depends_on:
+            - db
+            - event_cache
+            - asgi

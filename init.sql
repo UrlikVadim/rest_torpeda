@@ -4,8 +4,8 @@
 
 CREATE TABLE IF NOT EXISTS public.largetable
 (
-    id bigint NOT NULL DEFAULT 'nextval('largetable_id_seq'::regclass)',
-    text_f text COLLATE pg_catalog."default",
+    id bigserial NOT NULL,
+    text_f text,
     number_f numeric,
     ts_f timestamp with time zone,
     bool_f boolean,
@@ -15,4 +15,4 @@ CREATE TABLE IF NOT EXISTS public.largetable
 TABLESPACE pg_default;
 
 ALTER TABLE IF EXISTS public.largetable
-    OWNER to admin;
+    OWNER to test;
