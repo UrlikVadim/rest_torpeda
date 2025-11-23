@@ -1,4 +1,4 @@
-from src.test import app
+from src.main import app
 __doc__ = """
 Тест выгрузки больших данных через EventSource
 и отображении их пользаку

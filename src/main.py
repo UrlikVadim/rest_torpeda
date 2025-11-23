@@ -11,7 +11,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from src.api import POSTGRES_POOL, VALKEY_POOL, router
+from src.api import DB_POOL, CACHE_POOL, router
 
 logging.basicConfig(
     level=logging.INFO
@@ -20,12 +20,12 @@ log = logging.getLogger("app")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await POSTGRES_POOL.open(wait=True)
+    await DB_POOL.open(wait=True)
     log.info("======= Старт ==================")
     yield
     log.info("======= Закрываю коннекты ======")
-    await POSTGRES_POOL.close()
-    await VALKEY_POOL.aclose()
+    await DB_POOL.close()
+    await CACHE_POOL.aclose()
     log.info("======= Остановка ==============")
 
 app = FastAPI(lifespan=lifespan)
@@ -39,7 +39,7 @@ async def count_data():
     """
     Считаем количество записей в БД
     """
-    async with POSTGRES_POOL.connection() as conn:
+    async with DB_POOL.connection() as conn:
         async with conn.cursor() as curs:
             sql = """
             SELECT count(*) FROM public.largetable
@@ -53,7 +53,7 @@ async def delete_data():
     """
     Сносим таблицу
     """
-    async with POSTGRES_POOL.connection() as conn:
+    async with DB_POOL.connection() as conn:
         async with conn.cursor() as curs:
             sql = """
             TRUNCATE TABLE public.largetable
@@ -70,7 +70,7 @@ async def fill_data(params: FillDataParams):
     """
     Заполняем таблицу данными
     """
-    async with POSTGRES_POOL.connection() as conn:
+    async with DB_POOL.connection() as conn:
         async with conn.cursor() as curs:
             sql = """
             INSERT INTO public.largetable(text_f, number_f, ts_f, bool_f)

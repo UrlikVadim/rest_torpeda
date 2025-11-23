@@ -1,0 +1,1 @@
+uvicorn --host 127.0.0.2 --port 8080 --env-file ./.env asgi:app
