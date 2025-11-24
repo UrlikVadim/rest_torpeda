@@ -152,6 +152,7 @@ class DataEnd(Exception):
     """
 
 class StreamLargeTable:
+    active_connections = 0
 
     def __init__(self, request: Request, chunk_size:int=1000):
         self.uuid = uuid.uuid4().hex
@@ -160,22 +161,26 @@ class StreamLargeTable:
         self.start_time = datetime.now()
 
     def __str__(self):
-        return f"<STREAM {self.uuid} {datetime.now() - self.start_time}>"
+        return f"[STREAM ({self.active_connections} active PID: {os.getpid()}) UUID: {self.uuid} {datetime.now() - self.start_time} alive]"
     
     async def __aiter__(self):
         """
         Оборачиваем поток в трай чтоб при ошибке js EventSource не переподключался
         """
+        self.__class__.active_connections += 1
         log.info(f"{self} старт")
         try:
             async for data in self.stream():
                 yield data
         except Exception as e:
             log.error(f"{self} ошибка", exc_info=True)
-            yield {
-                "event": "error",
-                "data": jsonable_encoder({"message": f"Ошибка {type(e)} в потоке {self}"})
-            }
+            if not (await self.request.is_disconnected()):
+                yield {
+                    "event": "error",
+                    "data": jsonable_encoder({"message": f"Ошибка {type(e)} в потоке {self}"})
+                }
+                log.info(f"{self} Отправил пользователю событие об ошибке")
+        self.__class__.active_connections -= 1
         log.info(f"{self} конец")
 
     async def stream(self):

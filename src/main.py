@@ -106,7 +106,6 @@ def generate_row():
     noun = random.choice(NOUNS)
     verb = random.choice(VERBS)
     adverb = random.choice(ADVERBS)
-
     # Собираем предложение, делаем первую букву заглавной и ставим точку
     text_f = f"{adjective.capitalize()} {noun} {verb} {adverb}."
     number_f = random.randint(-999999, 999999)
