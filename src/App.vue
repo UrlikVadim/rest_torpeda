@@ -1,23 +1,65 @@
 <script setup>
-import {ref, useTemplateRef, onMounted, computed} from 'vue';
+import {ref, useTemplateRef, onMounted, reactive} from 'vue';
 
-let data = [
-{id:1, text_f:'Быстрый собака ведет тихо.', number_f:949398, ts_f:'2006-01-17T18:25:52', bool_f: true, row_info:'kek'},
+const SLICED_WINDOW = 100;
+
+let test_data = [
+{id:1, text_f:'Быстрый собака ведет тихо. first', number_f:949398, ts_f:'2006-01-17T18:25:52', bool_f: true, row_info:'kek'},
 {id:2, text_f:'Быстрый город бежит медленно.', number_f:-88376, ts_f:'2075-10-19T06:57:55', bool_f: true, row_info:'kek'},
 {id:3, text_f:'Умный дом читает тихо.', number_f:-689484, ts_f:'2035-09-28T02:27:01', bool_f: true, row_info:'kek'},
 {id:4, text_f:'Новый дом смотрит далеко.', number_f:-716125, ts_f:'1971-03-11T05:25:39', bool_f: true, row_info:'kek'},
 {id:5, text_f:'Быстрый кошка строит медленно.', number_f:-737547, ts_f:'2048-12-16T16:12:39', bool_f: true, row_info:'kek'},
 {id:6, text_f:'Умный собака играет далеко.', number_f:843126, ts_f:'2033-11-27T11:06:40', bool_f: true, row_info:'kek'},
-{id:7, text_f:'Большой собака спит медленно.', number_f:-922272, ts_f:'1988-02-07T20:50:39', bool_f: true, row_info:'kek'},
+{id:7, text_f:'Большой собака спит медленно.', number_f:-922272, ts_f:'1988-02-07T20:50:39', bool_f: true, row_info:'kekhhhjkjhkjhkhkhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjhkjghuigiiugigygu999'},
 {id:8, text_f:'Умный ребенок спит далеко.', number_f:808076, ts_f:'2021-10-23T01:18:32', bool_f: true, row_info:'kek'},
 {id:9, text_f:'Новый город бежит быстро.', number_f:-984978, ts_f:'1994-09-28T21:43:34', bool_f: true, row_info:'kek'},
-{id:99999999, text_f:'Старый кошка делает близко.', number_f:180423, ts_f:'2031-01-19T17:26:51', bool_f: true, row_info:'kek'}
+{id:99999999, text_f:'Старый кошка делает близко. last', number_f:180423, ts_f:'2031-01-19T17:26:51', bool_f: true, row_info:'kek'}
 ]
+let data = [];
+for (let i=0; i<1000; i++){
+  let row = Object.assign({}, test_data[Math.floor(Math.random() * test_data.length)]);
+  row.id=i;
+  data.push(row);
+}
 
-const dataView = ref([].concat(data, data, data));
+const dataView = ref([]);
+const scroll_r = reactive({
+  last_scroll: 0,
+  last_scroll_max: 0,
+  from: 0,
+  to: SLICED_WINDOW
+});
+
+
+async function scroll(e) {
+  const current_scroll = e.target.scrollTop;
+  const current_scroll_max = e.target.scrollHeight-e.target.clientHeight;
+  const CHUNK = Math.round(SLICED_WINDOW/2);
+
+  // чекаем скрол вниз до конца
+  if(current_scroll >= current_scroll_max-1 && scroll_r.to < data.length){
+    scroll_r.from+=CHUNK;
+    scroll_r.to+=CHUNK;
+    e.target.scrollTop = scroll_r.last_scroll_max/2;
+  }
+  // чекаем скрол вверх до конца
+  if(current_scroll <= 0 && scroll_r.from > 0  && scroll_r.from > 0){
+    scroll_r.from-=CHUNK;
+    scroll_r.to-=CHUNK;
+    e.target.scrollTop = scroll_r.last_scroll_max/2;
+  }
+  console.log(data[249]);
+  dataView.value = data.slice(scroll_r.from, scroll_r.to);
+  // проставляем текущие позиции в реактив
+  scroll_r.last_scroll = current_scroll;
+  scroll_r.last_scroll_max = current_scroll_max;
+}
 
 onMounted(() => {
-  // messagebox.value.focus()
+  for (let row of data){
+    console.log(row);
+  }
+  dataView.value = data.slice(scroll_r.from, scroll_r.to);
 })
 </script>
 
@@ -100,7 +142,7 @@ onMounted(() => {
                style="vertical-align: middle; margin: 2px 2px 0 0; padding: 10px; 
                       background-color: #fff; border: 1px solid #ddd;" />
     </form>
-    <div class="table_container">
+    <div class="table_container" @scroll="scroll">
       <table>
         <thead>
           <tr>
@@ -124,7 +166,8 @@ onMounted(() => {
         </tbody>
       </table>
     </div>
-    <p>Показано с 0 по 0 строки</p>
+    <p>Показано с {{scroll_r.from}} по {{scroll_r.to}} строки.
+      [DEBUG (scroll {{scroll_r.last_scroll}} max {{scroll_r.last_scroll_max}})]</p>
     </div>
   </div>
 </template>
@@ -140,7 +183,7 @@ onMounted(() => {
   justify-content: center;
   overflow: hidden;
   background: #020024;
-  background: linear-gradient(90deg, rgba(66, 62, 148, 1) 0%, rgba(49, 49, 141, 1) 35%, rgba(11, 118, 139, 1) 100%);
+  background: linear-gradient(90deg, rgba(22, 22, 22, 1) 0%, rgba(11, 118, 139, 1) 100%);
 }
 .container{
   width: 90vw;
@@ -159,7 +202,7 @@ onMounted(() => {
   flex: 1;
   margin-top: 5px;
   border: 2px solid #000000ff;
-  background: #a7a7a7ff;
+  background: #d3d3d3ff;
   overflow-y: scroll;
 }
 
@@ -180,7 +223,7 @@ table{
 th {
   position: sticky;
   top: 0;
-  background: #a15252ff;
+  background: #7a6565ff;
 }
 table, th, td {
   padding: 10px;
