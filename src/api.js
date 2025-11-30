@@ -1,4 +1,4 @@
-import {reactive} from 'vue';
+import {reactive, ref} from 'vue';
 //TEST 
 let test_data = [
 {id:1, text_f:'Быстрый собака ведет тихо. first', number_f:949398, ts_f:'2006-01-17T18:25:52', bool_f: true, row_info:'kek'},
@@ -14,10 +14,38 @@ let test_data = [
 ]
 export let data = [];
 for (let i=0; i<1000; i++){
-  let row = Object.assign({}, test_data[Math.floor(Math.random() * test_data.length)]);
-  row.id=i;
-  data.push(row);
+    let row = {tr:ref(), edit:false, data:{}};
+    row.data = Object.assign({}, test_data[Math.floor(Math.random() * test_data.length)]);
+    row.data.id=i;
+    // row.data.ts_f=new Date(row.data.ts_f);
+    data.push(row);
 }
+
+// Мессаге коробка
+export const MessageBox = {
+    msg_list:[],
+    dialog: null,
+    header: ref(null),
+    message: ref(null),
+    show(head, msg){
+        if(this.msg_list.length > 0){
+            msg_list.push({head: head, msg:msg});
+            return;
+        }
+        this.header.value = head;
+        this.message.value = msg;
+        this.dialog.showModal();
+    },
+    close(){
+        if(this.msg_list.length > 0){
+            let message = this.msg_list.shift();
+            this.header.value = message.head;
+            this.message.value = message.msg;
+            return;
+        }
+        this.dialog.close();
+    }
+};
 
 
 // Количество отображаемых строк (скользящее окно)

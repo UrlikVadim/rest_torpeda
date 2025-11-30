@@ -1,8 +1,49 @@
 <script setup>
-import {ref, useTemplateRef, onMounted, reactive} from 'vue';
-import {VIEW_CHUNK, scroll_r, data} from '@/api';
+import {ref, useTemplateRef, onMounted, reactive, defineModel} from 'vue';
+import {VIEW_CHUNK, scroll_r, data, MessageBox} from '@/api';
+
+
+
+
 
 const dataView = ref([]);
+
+const dataSelect = {
+  id: ref(),
+  text_f: ref(),
+  number_f:ref(),
+  ts_f: ref(),
+  bool_f: ref()
+};
+
+// const types ={
+//   id: "int",
+//   text_f: "str",
+//   number_f:"int",
+//   ts_f: "date",
+//   bool_f: "bool",
+//   row_info: "text",
+// }
+ 
+async function rowclick(row) {
+  // console.log(row.tr);
+  dataSelect.id.value = row.data.id;
+  dataSelect.text_f.value = row.data.text_f;
+  dataSelect.number_f.value = row.data.number_f;
+  dataSelect.ts_f.value = row.data.ts_f;
+  dataSelect.bool_f.value = row.data.bool_f;
+  dataSelect.bool_f.checked = row.data.bool_f;
+}
+
+let __trootling = null;
+
+function trottling(e){
+  if (__trootling){
+    clearTimeout(__trootling);
+    __trootling = null;
+  }
+  __trootling = setTimeout(()=>scroll(e), 100);
+}
 
 async function scroll(e) {
   const current_scroll = e.target.scrollTop;
@@ -14,7 +55,7 @@ async function scroll(e) {
     scroll_r.to+=CHUNK;
     // Грамотно рассчитываем позицию скролла чтоб было максимально бесшовно
     // Половина всей высоты - половина отображаемого окна + высота одной записи)
-    e.target.scrollTop = scroll_r.last_scroll_max/2 - e.target.clientHeight/2 + current_scroll_max/VIEW_CHUNK;
+    e.target.scrollTop = current_scroll_max/2 - e.target.clientHeight/2 + current_scroll_max/VIEW_CHUNK;
   }
   // чекаем скрол вверх до конца
   if(current_scroll <= 0 && scroll_r.from > 0  && scroll_r.from > 0){
@@ -22,7 +63,7 @@ async function scroll(e) {
     scroll_r.to-=CHUNK;
     // Грамотно рассчитываем позицию скролла чтоб было максимально бесшовно
     // Половина всей высоты + половина отображаемого окна - высота одной записи)
-    e.target.scrollTop = scroll_r.last_scroll_max/2 + e.target.clientHeight/2 - current_scroll_max/VIEW_CHUNK;
+    e.target.scrollTop = current_scroll_max/2 + e.target.clientHeight/2 - current_scroll_max/VIEW_CHUNK;
   }
   dataView.value = data.slice(scroll_r.from, scroll_r.to);
   // проставляем текущие позиции в реактив
@@ -36,6 +77,14 @@ onMounted(() => {
 </script>
 
 <template>
+  <dialog :ref="el=>MessageBox.dialog=el">
+    <h2>{{MessageBox.header}}</h2>
+    <p>{{MessageBox.message}}</p>
+
+    <button type="button" @click="MessageBox.close()">
+      Закрыть
+    </button>
+  </dialog>
   <div class="main">
     <div class="container">
       <h1>Тестовый стенд EventSource</h1>
@@ -43,7 +92,7 @@ onMounted(() => {
         <input type="number" placeholder="Количество записей" name="count" 
                style="vertical-align: middle; margin: 5px 10px 5px 0; padding: 10px; 
                       background-color: #fff; border: 1px solid #ddd;" />
-        <button style="padding: 10px 20px; background-color: #266639ff; 
+        <button @click="MessageBox.show('test','test')"style="padding: 10px 20px; background-color: #266639ff; 
                        border: 1px solid #ddd; color: white;">Добавить</button>
         <button style="padding: 10px 20px; background-color: #912e2eff; 
                        border: 1px solid #ddd; color: white;">Очистить БД</button>
@@ -65,20 +114,20 @@ onMounted(() => {
                        border: 1px solid #ddd; color: white;">Изменить</button>
         <button style="padding: 10px 20px; background-color: #973535ff; 
                        border: 1px solid #ddd; color: white;">Удалить</button>
-        <input type="number" placeholder="id" name="id"  disabled
+        <input :ref="(e)=>dataSelect.id=e" type="number" placeholder="id" name="id" disabled 
                style="vertical-align: middle; margin: 2px 2px 0 0; padding: 10px; 
                       background-color: #fff; border: 1px solid #ddd;" />
-        <input type="text" placeholder="text_f" name="text_f" 
+        <input :ref="(e)=>dataSelect.text_f=e" type="text" placeholder="text_f" name="text_f" 
                style="vertical-align: middle; margin: 2px 2px 0 0; padding: 10px; 
                       background-color: #fff; border: 1px solid #ddd;" />
-        <input type="number" placeholder="number_f" name="number_f" 
+        <input :ref="(e)=>dataSelect.number_f=e" type="number" placeholder="number_f" name="number_f" 
                style="vertical-align: middle; margin: 2px 2px 0 0; padding: 10px; 
                       background-color: #fff; border: 1px solid #ddd;" />
-        <input type="datetime-local" placeholder="ts_f" name="ts_f" 
+        <input :ref="(e)=>dataSelect.ts_f=e" type="datetime-local" placeholder="ts_f" name="ts_f" 
                style="vertical-align: middle; margin: 2px 2px 0 0; padding: 10px; 
                       background-color: #fff; border: 1px solid #ddd;" />
         <label style="margin: 2px 2px 0 0;padding: 10px 20px;">bool_f</label>
-        <input type="checkbox" placeholder="bool_f" name="bool_f" 
+        <input :ref="(e)=>dataSelect.bool_f=e" type="checkbox" placeholder="bool_f" name="bool_f" 
                style="vertical-align: middle; margin: 2px 2px 0 0; padding: 10px; 
                       background-color: #fff; border: 1px solid #ddd;" />
     </form>
@@ -114,7 +163,7 @@ onMounted(() => {
                style="vertical-align: middle; margin: 2px 2px 0 0; padding: 10px; 
                       background-color: #fff; border: 1px solid #ddd;" />
     </form>
-    <div class="table_container" @scroll="scroll">
+    <div class="table_container" @scroll="trottling">
       <table>
         <thead>
           <tr>
@@ -127,14 +176,13 @@ onMounted(() => {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="row  in dataView">
-            <td>{{ row.id }}</td>
-            <td>{{ row.text_f }}</td>
-            <td>{{ row.number_f}}</td>
-            <td>{{ row.ts_f }}</td>
-            <td>{{ row.bool_f}}</td>
-            <td>{{ row.row_info}}</td>
+          <template v-for="(row, index) in dataView">
+          <tr :ref="(el)=>dataView[index].tr = el" @click="rowclick(row)">
+            <td v-for="(value, key) in row.data">
+             {{value}}
+            </td>
           </tr>
+          </template>
         </tbody>
       </table>
     </div>
@@ -145,6 +193,19 @@ onMounted(() => {
 </template>
 
 <style scoped>
+dialog {
+    border: 2px solid #111111;
+    padding: 2em;
+    border-radius: 8px;
+    background: linear-gradient(0deg, rgba(78, 78, 78, 1) 0%, rgba(209, 209, 209, 1) 100%);
+    box-shadow: 12px 18px 16px 8px rgba(34, 60, 80, 0.2);
+    margin: auto; 
+
+}
+dialog::backdrop {
+  background-color: rgba(54, 54, 54, 0.6);
+  backdrop-filter: blur(3px); 
+}
 .main {
   margin:0;
   padding: 0;
@@ -163,7 +224,6 @@ onMounted(() => {
   padding: 10px;
   display: flex;
   flex-direction: column;
-  background: #197370;
   background: linear-gradient(0deg, rgba(153, 145, 155, 1) 0%, rgba(209, 209, 209, 1) 100%);
   border: 2px solid #000000ff;
   border-radius: 10px 10px 10px 10px;
@@ -198,7 +258,10 @@ th {
   background: #7a6565ff;
 }
 table, th, td {
-  padding: 10px;
+    padding: 10px;
   border: 1px solid #3f3f3fff;
+}
+td > span{
+  padding: 10px;
 }
 </style>

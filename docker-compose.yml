@@ -1,7 +1,6 @@
-version: '0.1'
 
 volumes:
-    rest_torpeda_postgres_data
+    rest_torpeda_postgres_data:
 
 networks:
     rest_torpeda:
